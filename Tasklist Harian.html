@@ -1,0 +1,1275 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tasklist Harian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"','system-ui','-apple-system','Segoe UI','Roboto','sans-serif'] } } }
+  };
+</script>
+<style>
+  :root{
+    box-sizing:border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg:#f3f4f8;
+    --surface:#ffffff;
+    --surface-2:#f7f8fb;
+    --rail:#ffffff;
+    --border:#e6e8ef;
+    --border-strong:#d6dae4;
+    --text:#13161d;
+    --muted:#6b7180;
+    --faint:#99a0ad;
+    --accent:#5b4bdb;
+    --accent-2:#9b5cf0;
+    --accent-soft:#eeebff;
+    --accent-ink:#4634c4;
+    --hi-bg:#fdeceb; --hi-fg:#be3626; --hi-dot:#ef4b3a;
+    --md-bg:#fff3e0; --md-fg:#9c620b; --md-dot:#f0a330;
+    --lo-bg:#e8f6ef; --lo-fg:#15724a; --lo-dot:#10b981;
+    --done-bg:#eef0f4; --done-fg:#5b6270;
+    --late-bg:#fdefee; --late-fg:#b23527;
+    --ring:rgba(91,75,219,.16);
+    --shadow:0 1px 2px rgba(16,20,32,.05), 0 10px 30px -18px rgba(16,20,32,.35);
+    --shadow-lg:0 24px 60px -30px rgba(16,20,32,.5);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#0c0e13; --surface:#161922; --surface-2:#1b1f29; --rail:#12141b;
+      --border:#262b36; --border-strong:#343b49; --text:#eceef4; --muted:#99a0ae; --faint:#6f7686;
+      --accent:#8575ff; --accent-2:#c084fc; --accent-soft:#241f4d; --accent-ink:#b9adff;
+      --hi-bg:#3a1d1b; --hi-fg:#ffa096; --hi-dot:#f2695c;
+      --md-bg:#3a2c15; --md-fg:#f4c276; --md-dot:#e0a44a;
+      --lo-bg:#133229; --lo-fg:#7ad9ab; --lo-dot:#35c48b;
+      --done-bg:#23272f; --done-fg:#99a0ae;
+      --late-bg:#3a1d1b; --late-fg:#ffa096;
+      --ring:rgba(133,117,255,.25);
+      --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 32px -20px rgba(0,0,0,.95);
+      --shadow-lg:0 30px 70px -35px rgba(0,0,0,1);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#0c0e13; --surface:#161922; --surface-2:#1b1f29; --rail:#12141b;
+    --border:#262b36; --border-strong:#343b49; --text:#eceef4; --muted:#99a0ae; --faint:#6f7686;
+    --accent:#8575ff; --accent-2:#c084fc; --accent-soft:#241f4d; --accent-ink:#b9adff;
+    --hi-bg:#3a1d1b; --hi-fg:#ffa096; --hi-dot:#f2695c;
+    --md-bg:#3a2c15; --md-fg:#f4c276; --md-dot:#e0a44a;
+    --lo-bg:#133229; --lo-fg:#7ad9ab; --lo-dot:#35c48b;
+    --done-bg:#23272f; --done-fg:#99a0ae;
+    --late-bg:#3a1d1b; --late-fg:#ffa096;
+    --ring:rgba(133,117,255,.25);
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 12px 32px -20px rgba(0,0,0,.95);
+    --shadow-lg:0 30px 70px -35px rgba(0,0,0,1);
+  }
+  html{ scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body{ background:var(--bg); color:var(--text); }
+  body::before{ content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40; }
+  .card{ background:var(--surface); border:1px solid var(--border); }
+  .soft{ box-shadow:var(--shadow); }
+  .soft-lg{ box-shadow:var(--shadow-lg); }
+  .pill{ border:1px solid var(--border); background:var(--surface); }
+  .btn-primary{ background-image:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; }
+  .btn-primary:hover{ filter:saturate(1.1) brightness(1.04); }
+  .focus-ring:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  input,select,textarea,button{ font-family:inherit; }
+  .field{ background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:.7rem; padding:.55rem .75rem; font-size:.875rem; width:100%; }
+  .field:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 4px var(--ring); }
+  .field:disabled{ background:var(--surface-2); color:var(--muted); }
+  .clamp-2{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .scroll-x{ overflow-x:auto; }
+  .task-card{ transition:border-color .15s ease, box-shadow .15s ease; }
+  .task-card:hover{ border-color:var(--border-strong); }
+  .auth-art{ background-image:linear-gradient(145deg,var(--accent),var(--accent-2)); }
+  .auth-art::after{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(60% 50% at 12% 18%, rgba(255,255,255,.28), transparent 60%),
+      radial-gradient(45% 45% at 85% 78%, rgba(255,255,255,.2), transparent 65%);
+  }
+  .glass{ background:color-mix(in srgb, var(--surface) 86%, transparent); backdrop-filter:blur(14px); }
+  .brand-mark{ background-image:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; }
+  .menu{ box-shadow:var(--shadow-lg); border:1px solid var(--border); background:var(--surface); }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
+</style>
+</head>
+<body class="font-sans antialiased">
+<script>
+  (function(){ try{ var t=localStorage.getItem('tasklist.theme'); if(t==='dark'||t==='light') document.documentElement.setAttribute('data-theme',t); }catch(e){} })();
+</script>
+
+<!-- ============ LAYAR MASUK ============ -->
+<div id="authScreen" class="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+  <div class="auth-art relative hidden flex-col justify-between overflow-hidden p-10 text-white lg:flex">
+    <div class="relative z-10 flex items-center gap-3">
+      <div class="grid h-10 w-10 place-items-center rounded-2xl bg-white/20 text-sm font-extrabold backdrop-blur">TH</div>
+      <p class="text-[15px] font-bold tracking-tight">Tasklist Harian</p>
+    </div>
+    <div class="relative z-10 max-w-md">
+      <h1 class="text-4xl font-extrabold leading-[1.1] tracking-tight">Satu papan untuk tugas harian seluruh PIC.</h1>
+      <p class="mt-4 text-[15px] leading-relaxed text-white/85">Setiap tugas punya pemilik, prioritas, dan tanggal kerja. Yang belum selesai tinggal digeser ke hari berikutnya, bukan hilang dari radar.</p>
+      <ul class="mt-8 space-y-3 text-sm text-white/90">
+        <li class="flex items-center gap-3"><span class="grid h-6 w-6 place-items-center rounded-full bg-white/20">1</span>Administrator mengatur akun dan seluruh tugas tim.</li>
+        <li class="flex items-center gap-3"><span class="grid h-6 w-6 place-items-center rounded-full bg-white/20">2</span>PIC mengelola tugasnya sendiri, tercatat atas namanya.</li>
+        <li class="flex items-center gap-3"><span class="grid h-6 w-6 place-items-center rounded-full bg-white/20">3</span>Tugas tertunda otomatis terlihat sebagai terlambat.</li>
+      </ul>
+    </div>
+    <p class="relative z-10 text-xs text-white/70">Data tersimpan di browser perangkat ini.</p>
+  </div>
+
+  <div class="flex items-center justify-center p-6 sm:p-10">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 flex items-center gap-3 lg:hidden">
+        <div class="brand-mark grid h-10 w-10 place-items-center rounded-2xl text-sm font-extrabold">TH</div>
+        <p class="text-[15px] font-bold">Tasklist Harian</p>
+      </div>
+
+      <h2 id="authTitle" class="text-2xl font-extrabold tracking-tight">Masuk ke akun Anda</h2>
+      <p id="authSub" class="mt-1.5 text-sm" style="color:var(--muted)">Gunakan nama pengguna dan kata sandi yang diberikan administrator.</p>
+
+      <div class="mt-7 grid gap-3">
+        <label id="wrapName" class="hidden grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">Nama lengkap</span>
+          <input id="aName" class="field" placeholder="Nama yang tampil di tugas" maxlength="40" autocomplete="name">
+        </label>
+        <label class="grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">Nama pengguna</span>
+          <input id="aUser" class="field" placeholder="contoh: rudi.lay" maxlength="30" autocomplete="username" autocapitalize="none" spellcheck="false">
+        </label>
+        <label class="grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">Kata sandi</span>
+          <input id="aPass" type="password" class="field" placeholder="••••••••" autocomplete="current-password">
+        </label>
+        <label id="wrapPass2" class="hidden grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">Ulangi kata sandi</span>
+          <input id="aPass2" type="password" class="field" placeholder="••••••••" autocomplete="new-password">
+        </label>
+
+        <p id="authErr" class="hidden rounded-xl px-3 py-2 text-xs font-semibold" style="background:var(--hi-bg); color:var(--hi-fg)"></p>
+
+        <button id="authBtn" class="btn-primary focus-ring mt-1 rounded-xl px-4 py-2.5 text-sm font-bold soft">Masuk</button>
+      </div>
+
+      <p id="authFoot" class="mt-6 text-xs leading-relaxed" style="color:var(--faint)">Lupa kata sandi? Minta administrator melakukan reset dari menu Pengaturan akun.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APLIKASI ============ -->
+<div id="appScreen" class="hidden">
+<div class="flex min-h-screen">
+
+  <aside class="hidden lg:flex w-64 shrink-0 flex-col gap-6 border-r p-5" style="background:var(--rail); border-color:var(--border)">
+    <div class="flex items-center gap-2.5">
+      <div class="brand-mark grid h-9 w-9 place-items-center rounded-xl text-sm font-extrabold">TH</div>
+      <div class="leading-tight">
+        <p class="text-[15px] font-bold">Tasklist Harian</p>
+        <p class="text-xs" style="color:var(--muted)">Tugas tim per hari</p>
+      </div>
+    </div>
+
+    <nav class="flex flex-col gap-1" id="scopeNav">
+      <button class="scope-btn focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium" data-scope="day">
+        <span class="flex items-center gap-2.5"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--accent)"></span>Per hari</span>
+        <span class="count text-xs" style="color:var(--muted)"></span>
+      </button>
+      <button class="scope-btn focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium" data-scope="mine">
+        <span class="flex items-center gap-2.5"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--accent-2)"></span>Tugas saya</span>
+        <span class="count text-xs" style="color:var(--muted)"></span>
+      </button>
+      <button class="scope-btn focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium" data-scope="all">
+        <span class="flex items-center gap-2.5"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--faint)"></span>Semua tugas</span>
+        <span class="count text-xs" style="color:var(--muted)"></span>
+      </button>
+      <button class="scope-btn focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium" data-scope="overdue">
+        <span class="flex items-center gap-2.5"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--hi-dot)"></span>Terlambat</span>
+        <span class="count text-xs" style="color:var(--muted)"></span>
+      </button>
+      <button class="scope-btn focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium" data-scope="done">
+        <span class="flex items-center gap-2.5"><span class="h-1.5 w-1.5 rounded-full" style="background:var(--lo-dot)"></span>Selesai</span>
+        <span class="count text-xs" style="color:var(--muted)"></span>
+      </button>
+    </nav>
+
+    <div class="rounded-2xl p-4 card soft">
+      <p class="text-xs font-semibold" style="color:var(--muted)">Progres tanggal terpilih</p>
+      <p class="mt-2 text-3xl font-extrabold tracking-tight" id="dayPct">0%</p>
+      <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full" style="background:var(--border)">
+        <div id="dayBar" class="h-full rounded-full" style="width:0%; background-image:linear-gradient(90deg,var(--accent),var(--accent-2))"></div>
+      </div>
+      <p class="mt-2 text-xs" id="dayCount" style="color:var(--muted)">Belum ada tugas</p>
+    </div>
+
+    <div class="mt-auto flex flex-col gap-2">
+      <button id="usersBtnSide" class="admin-only focus-ring flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm pill">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5"/><path d="M16.5 11.5a2.6 2.6 0 1 0 0-5.2"/><path d="M17 19h3.5c-.3-2-1.3-3.4-2.8-4"/></svg>
+        Pengaturan akun
+      </button>
+      <button id="themeBtn" class="focus-ring flex items-center justify-between rounded-xl px-3 py-2 text-sm pill">
+        <span style="color:var(--muted)">Tampilan</span>
+        <span id="themeLabel" class="font-semibold">Otomatis</span>
+      </button>
+      <button id="clearDoneBtn" class="focus-ring rounded-xl px-3 py-2 text-left text-sm pill" style="color:var(--muted)">Hapus tugas selesai</button>
+    </div>
+  </aside>
+
+  <main class="min-w-0 flex-1">
+    <header class="sticky z-30 border-b glass" style="top: env(safe-area-inset-top, 0px); border-color:var(--border)">
+      <div class="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+        <div class="brand-mark lg:hidden grid h-9 w-9 shrink-0 place-items-center rounded-xl text-xs font-extrabold">TH</div>
+        <div class="min-w-0 flex-1">
+          <h1 class="truncate text-lg font-extrabold tracking-tight" id="pageTitle">Tugas hari ini</h1>
+          <p class="truncate text-xs" id="pageSub" style="color:var(--muted)"></p>
+        </div>
+
+        <div class="relative hidden sm:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2" style="color:var(--faint)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input id="search" type="search" placeholder="Cari tugas atau PIC" class="field w-52 pl-8" autocomplete="off">
+        </div>
+
+        <div class="flex items-center gap-1 rounded-xl p-1" style="background:var(--surface-2); border:1px solid var(--border)">
+          <button class="view-btn focus-ring rounded-lg p-1.5" data-view="tiles" title="Tampilan kartu" aria-label="Tampilan kartu">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          </button>
+          <button class="view-btn focus-ring rounded-lg p-1.5" data-view="list" title="Tampilan daftar" aria-label="Tampilan daftar">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+          </button>
+        </div>
+
+        <button id="addBtn" class="btn-primary focus-ring flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold soft">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="hidden sm:inline">Tambah tugas</span>
+        </button>
+
+        <div class="relative">
+          <button id="bellBtn" class="focus-ring relative rounded-xl p-2 pill" aria-label="Komentar belum dibaca">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"/><path d="M10.5 19.5a2 2 0 0 0 3 0"/></svg>
+            <span id="bellBadge" class="absolute -right-1 -top-1 hidden min-w-[1.15rem] rounded-full px-1 text-center text-[10px] font-extrabold leading-[1.15rem] text-white" style="background-image:linear-gradient(135deg,var(--accent),var(--accent-2))">0</span>
+          </button>
+          <div id="bellMenu" class="absolute right-0 top-full z-50 mt-2 hidden w-80 max-w-[85vw] rounded-2xl p-1.5 menu"></div>
+        </div>
+
+        <div class="relative">
+          <button id="profileBtn" class="focus-ring flex items-center gap-2 rounded-xl py-1 pl-1 pr-2 pill">
+            <span id="profileAvatar"></span>
+            <span class="hidden text-left leading-tight md:block">
+              <span class="block max-w-[9rem] truncate text-xs font-bold" id="profileName"></span>
+              <span class="block text-[11px]" id="profileRole" style="color:var(--muted)"></span>
+            </span>
+            <svg class="h-3.5 w-3.5" style="color:var(--faint)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div id="profileMenu" class="absolute right-0 top-full z-50 mt-2 hidden w-56 rounded-2xl p-1.5 menu">
+            <div class="px-3 py-2">
+              <p class="truncate text-sm font-bold" id="menuName"></p>
+              <p class="truncate text-xs" id="menuUser" style="color:var(--muted)"></p>
+            </div>
+            <div class="my-1 h-px" style="background:var(--border)"></div>
+            <button data-menu="password" class="focus-ring w-full rounded-xl px-3 py-2 text-left text-sm font-medium hover:opacity-80">Ubah kata sandi</button>
+            <button data-menu="users" class="admin-only focus-ring w-full rounded-xl px-3 py-2 text-left text-sm font-medium hover:opacity-80">Pengaturan akun</button>
+            <button data-menu="logout" class="focus-ring w-full rounded-xl px-3 py-2 text-left text-sm font-bold" style="color:var(--hi-fg)">Keluar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-6">
+        <div id="dateNav" class="flex items-center gap-1 rounded-xl p-1" style="background:var(--surface-2); border:1px solid var(--border)">
+          <button id="prevDay" class="focus-ring rounded-lg px-2 py-1" aria-label="Hari sebelumnya"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 6-6 6 6 6"/></svg></button>
+          <input id="datePick" type="date" class="focus-ring rounded-lg bg-transparent px-1 text-sm font-semibold" style="color:var(--text)">
+          <button id="nextDay" class="focus-ring rounded-lg px-2 py-1" aria-label="Hari berikutnya"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m10 6 6 6-6 6"/></svg></button>
+          <button id="todayBtn" class="focus-ring rounded-lg px-2 py-1 text-xs font-bold" style="color:var(--accent-ink)">Hari ini</button>
+        </div>
+
+        <div class="flex items-center gap-1 rounded-xl p-1" style="background:var(--surface-2); border:1px solid var(--border)" id="statusChips">
+          <button class="chip focus-ring rounded-lg px-2.5 py-1 text-xs font-bold" data-status="semua">Semua</button>
+          <button class="chip focus-ring rounded-lg px-2.5 py-1 text-xs font-bold" data-status="belum">Belum selesai</button>
+          <button class="chip focus-ring rounded-lg px-2.5 py-1 text-xs font-bold" data-status="selesai">Selesai</button>
+        </div>
+
+        <select id="picFilter" class="field w-auto min-w-[8.5rem]" aria-label="Filter PIC"></select>
+        <select id="creatorFilter" class="field w-auto min-w-[9rem]" aria-label="Filter pembuat tugas"></select>
+        <select id="prioFilter" class="field w-auto min-w-[8.5rem]" aria-label="Filter prioritas">
+          <option value="semua">Semua prioritas</option>
+          <option value="tinggi">Prioritas tinggi</option>
+          <option value="sedang">Prioritas sedang</option>
+          <option value="rendah">Prioritas rendah</option>
+        </select>
+        <select id="sortBy" class="field w-auto min-w-[9.5rem]" aria-label="Urutkan">
+          <option value="prioritas">Urut: prioritas</option>
+          <option value="tanggal-asc">Urut: tanggal terdekat</option>
+          <option value="tanggal-desc">Urut: tanggal terjauh</option>
+          <option value="nama">Urut: nama tugas</option>
+          <option value="pic">Urut: nama PIC</option>
+          <option value="pembuat">Urut: pembuat tugas</option>
+          <option value="status">Urut: belum selesai dulu</option>
+        </select>
+
+        <button id="pushAllBtn" class="focus-ring ml-auto flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold pill">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h12M13 6l6 6-6 6"/></svg>
+          Geser yang belum selesai ke besok
+        </button>
+      </div>
+
+      <div class="sm:hidden px-4 pb-3">
+        <input id="searchMobile" type="search" placeholder="Cari tugas atau PIC" class="field" autocomplete="off">
+      </div>
+    </header>
+
+    <section class="p-4 sm:p-6">
+      <div id="board" class="grid grid-cols-1 gap-4 md:grid-cols-3"></div>
+      <div id="listWrap" class="hidden overflow-hidden rounded-2xl card soft"></div>
+      <div id="empty" class="hidden rounded-2xl card p-10 text-center soft">
+        <div class="brand-mark mx-auto grid h-12 w-12 place-items-center rounded-2xl">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11.5 11 13.5l4.5-4.5"/><rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M8 2.5v4M16 2.5v4"/></svg>
+        </div>
+        <p class="mt-3 text-base font-bold" id="emptyTitle">Belum ada tugas di sini</p>
+        <p class="mx-auto mt-1 max-w-sm text-sm" id="emptyText" style="color:var(--muted)">Tambahkan tugas pertama lengkap dengan PIC dan prioritasnya.</p>
+        <button class="btn-primary focus-ring mt-4 rounded-xl px-4 py-2 text-sm font-bold" data-action="add-empty">Tambah tugas</button>
+      </div>
+    </section>
+  </main>
+</div>
+</div>
+
+<!-- Modal tugas -->
+<div id="taskModal" class="fixed inset-0 z-50 hidden items-end justify-center sm:items-center sm:p-6" style="background:rgba(9,11,17,.5)">
+  <div class="w-full max-w-lg rounded-t-3xl card soft-lg sm:rounded-3xl">
+    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:var(--border)">
+      <h2 id="taskModalTitle" class="text-base font-extrabold">Tambah tugas</h2>
+      <button data-close="taskModal" class="focus-ring rounded-lg p-1.5" aria-label="Tutup" style="color:var(--muted)"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="grid gap-3 px-5 py-4">
+      <label class="grid gap-1.5">
+        <span class="text-xs font-semibold" style="color:var(--muted)">Nama tugas</span>
+        <input id="fTitle" class="field" placeholder="Contoh: Review laporan IPL Oktober" maxlength="120">
+        <span id="titleErr" class="hidden text-xs font-semibold" style="color:var(--hi-fg)">Nama tugas belum diisi.</span>
+      </label>
+      <label class="grid gap-1.5">
+        <span class="text-xs font-semibold" style="color:var(--muted)">Catatan <span class="font-normal">(opsional)</span></span>
+        <textarea id="fNotes" class="field" rows="2" placeholder="Detail singkat, lokasi, atau tautan" maxlength="300"></textarea>
+      </label>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">PIC</span>
+          <select id="fPic" class="field"></select>
+          <span id="picHint" class="hidden text-[11px]" style="color:var(--faint)">Hanya administrator yang bisa menugaskan ke PIC lain.</span>
+        </label>
+        <label class="grid gap-1.5">
+          <span class="text-xs font-semibold" style="color:var(--muted)">Prioritas</span>
+          <select id="fPrio" class="field">
+            <option value="tinggi">Tinggi</option>
+            <option value="sedang" selected>Sedang</option>
+            <option value="rendah">Rendah</option>
+          </select>
+        </label>
+      </div>
+      <label class="grid gap-1.5">
+        <span class="text-xs font-semibold" style="color:var(--muted)">Tanggal kerja</span>
+        <input id="fDate" type="date" class="field">
+      </label>
+      <p id="creatorNote" class="rounded-xl px-3 py-2 text-xs" style="background:var(--surface-2); color:var(--muted)"></p>
+    </div>
+    <div class="flex items-center justify-end gap-2 border-t px-5 py-4" style="border-color:var(--border)">
+      <button data-close="taskModal" class="focus-ring rounded-xl px-4 py-2 text-sm font-bold pill">Batal</button>
+      <button id="saveTask" class="btn-primary focus-ring rounded-xl px-4 py-2 text-sm font-bold">Simpan tugas</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pengaturan akun -->
+<div id="usersModal" class="fixed inset-0 z-50 hidden items-end justify-center sm:items-center sm:p-6" style="background:rgba(9,11,17,.5)">
+  <div class="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-t-3xl card soft-lg sm:rounded-3xl">
+    <div class="flex items-center justify-between border-b px-5 py-4" style="border-color:var(--border)">
+      <div>
+        <h2 class="text-base font-extrabold">Pengaturan akun</h2>
+        <p class="text-xs" style="color:var(--muted)">Administrator mengatur seluruh tugas; PIC mengelola tugasnya sendiri.</p>
+      </div>
+      <button data-close="usersModal" class="focus-ring rounded-lg p-1.5" aria-label="Tutup" style="color:var(--muted)"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-5 py-4">
+      <div class="flex items-center justify-between gap-3">
+        <p class="text-sm font-bold">Daftar akun</p>
+        <button id="newUserBtn" class="btn-primary focus-ring rounded-xl px-3 py-1.5 text-xs font-bold">Tambah akun</button>
+      </div>
+      <div id="usersTable" class="mt-3 overflow-hidden rounded-2xl" style="border:1px solid var(--border)"></div>
+
+      <div id="userForm" class="mt-4 hidden rounded-2xl p-4" style="background:var(--surface-2); border:1px solid var(--border)">
+        <p id="userFormTitle" class="text-sm font-bold">Tambah akun</p>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+          <label class="grid gap-1.5">
+            <span class="text-xs font-semibold" style="color:var(--muted)">Nama lengkap</span>
+            <input id="uName" class="field" maxlength="40" placeholder="Nama yang tampil di tugas">
+          </label>
+          <label class="grid gap-1.5">
+            <span class="text-xs font-semibold" style="color:var(--muted)">Nama pengguna</span>
+            <input id="uUser" class="field" maxlength="30" placeholder="dipakai saat masuk" autocapitalize="none" spellcheck="false">
+          </label>
+          <label class="grid gap-1.5" id="wrapRole">
+            <span class="text-xs font-semibold" style="color:var(--muted)">Level akses</span>
+            <select id="uRole" class="field">
+              <option value="pic">PIC User</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </label>
+          <label class="grid gap-1.5">
+            <span class="text-xs font-semibold" style="color:var(--muted)">Kata sandi <span id="passOptional" class="hidden font-normal">(kosongkan bila tidak diubah)</span></span>
+            <input id="uPass" type="password" class="field" placeholder="minimal 6 karakter" autocomplete="new-password">
+          </label>
+          <label class="flex items-center gap-2 sm:col-span-2" id="wrapActive">
+            <input id="uActive" type="checkbox" class="h-4 w-4 rounded" checked>
+            <span class="text-sm">Akun aktif dan boleh masuk</span>
+          </label>
+        </div>
+        <p id="userErr" class="mt-3 hidden rounded-xl px-3 py-2 text-xs font-semibold" style="background:var(--hi-bg); color:var(--hi-fg)"></p>
+        <div class="mt-4 flex justify-end gap-2">
+          <button id="cancelUser" class="focus-ring rounded-xl px-4 py-2 text-sm font-bold pill">Batal</button>
+          <button id="saveUser" class="btn-primary focus-ring rounded-xl px-4 py-2 text-sm font-bold">Simpan akun</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal komentar -->
+<div id="commentsModal" class="fixed inset-0 z-50 hidden items-end justify-center sm:items-center sm:p-6" style="background:rgba(9,11,17,.5)">
+  <div class="flex max-h-[92vh] w-full max-w-lg flex-col rounded-t-3xl card soft-lg sm:rounded-3xl">
+    <div class="flex items-start justify-between gap-3 border-b px-5 py-4" style="border-color:var(--border)">
+      <div class="min-w-0">
+        <h2 class="truncate text-base font-extrabold" id="cmTitle">Komentar</h2>
+        <p class="truncate text-xs" id="cmMeta" style="color:var(--muted)"></p>
+      </div>
+      <button data-close="commentsModal" class="focus-ring rounded-lg p-1.5" aria-label="Tutup" style="color:var(--muted)"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div id="cmThread" class="flex-1 overflow-y-auto px-5 py-4"></div>
+    <div class="border-t px-5 py-4" style="border-color:var(--border)">
+      <div class="flex items-end gap-2">
+        <span id="cmAvatar"></span>
+        <textarea id="cmInput" class="field" rows="2" placeholder="Tulis komentar untuk tugas ini" maxlength="500"></textarea>
+        <button id="cmSend" class="btn-primary focus-ring shrink-0 rounded-xl px-3.5 py-2 text-sm font-bold">Kirim</button>
+      </div>
+      <p class="mt-2 text-[11px]" style="color:var(--faint)">Semua pengguna bisa berkomentar. Tekan Ctrl + Enter untuk mengirim.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="pointer-events-none fixed inset-x-0 bottom-5 z-[60] flex justify-center px-4"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY_TASKS='tasklist.harian.v2', KEY_USERS='tasklist.users.v1', KEY_SESSION='tasklist.session.v1', KEY_UI='tasklist.ui.v2', KEY_READS='tasklist.reads.v1';
+
+  var PRIO={
+    tinggi:{label:'Tinggi',rank:0,bg:'var(--hi-bg)',fg:'var(--hi-fg)',dot:'var(--hi-dot)'},
+    sedang:{label:'Sedang',rank:1,bg:'var(--md-bg)',fg:'var(--md-fg)',dot:'var(--md-dot)'},
+    rendah:{label:'Rendah',rank:2,bg:'var(--lo-bg)',fg:'var(--lo-fg)',dot:'var(--lo-dot)'}
+  };
+  var PRIO_ORDER=['tinggi','sedang','rendah'];
+
+  var tasks=[], users=[], reads={}, me=null, editingId=null, editingUserId=null, userFormMode='new', commentTaskId=null;
+  var lastDeleted=null, toastTimer=null;
+  var ui={view:'tiles',scope:'day',date:todayISO(),status:'semua',pic:'semua',creator:'semua',prio:'semua',sort:'prioritas',q:''};
+
+  /* ---------- util ---------- */
+  function isoOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function todayISO(){ return isoOf(new Date()); }
+  function parseISO(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  function addDays(iso,n){ var d=parseISO(iso); d.setDate(d.getDate()+n); return isoOf(d); }
+  function fmtLong(iso){ try{ return new Intl.DateTimeFormat('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(parseISO(iso)); }catch(e){ return iso; } }
+  function fmtShort(iso){ try{ return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short'}).format(parseISO(iso)); }catch(e){ return iso; } }
+  function relDay(iso){ var t=todayISO(); if(iso===t) return 'Hari ini'; if(iso===addDays(t,1)) return 'Besok'; if(iso===addDays(t,-1)) return 'Kemarin'; return fmtShort(iso); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function uid(p){ return (p||'id')+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function initials(n){ n=String(n||'').trim(); if(!n) return '—'; var p=n.split(/\s+/); return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase(); }
+  function hueOf(n){ var s=String(n||'?'),h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return h; }
+  function $(id){ return document.getElementById(id); }
+
+  async function hashPass(pass, salt){
+    var raw = salt+'::'+pass;
+    if(window.crypto && crypto.subtle && crypto.subtle.digest){
+      try{
+        var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+        return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+      }catch(e){}
+    }
+    var h=5381; for(var i=0;i<raw.length;i++){ h=((h*33)^raw.charCodeAt(i))>>>0; }
+    return 'f'+h.toString(16);
+  }
+
+  /* ---------- storage ---------- */
+  function loadAll(){
+    try{ var r=localStorage.getItem(KEY_USERS); users=r?JSON.parse(r):[]; if(!Array.isArray(users)) users=[]; }catch(e){ users=[]; }
+    try{ var rt=localStorage.getItem(KEY_TASKS); tasks=rt?JSON.parse(rt):[]; if(!Array.isArray(tasks)) tasks=[]; }catch(e){ tasks=[]; }
+    tasks=tasks.filter(function(t){ return t&&t.title; }).map(function(t){
+      return {
+        id:t.id||uid('t'), title:String(t.title).slice(0,120), notes:String(t.notes||'').slice(0,300),
+        picId:t.picId||'', picName:String(t.picName||t.pic||'').slice(0,40),
+        creatorId:t.creatorId||'', creatorName:String(t.creatorName||'').slice(0,40),
+        prio:PRIO[t.prio]?t.prio:'sedang',
+        date:/^\d{4}-\d{2}-\d{2}$/.test(t.date)?t.date:todayISO(),
+        done:!!t.done, moved:+t.moved||0, created:t.created||Date.now(),
+        comments: Array.isArray(t.comments) ? t.comments.filter(function(c){ return c&&c.text; }).map(function(c){
+          return { id:c.id||uid('c'), userId:c.userId||'', userName:String(c.userName||'').slice(0,40), text:String(c.text).slice(0,500), at:+c.at||Date.now() };
+        }) : []
+      };
+    });
+    try{ var rr=localStorage.getItem(KEY_READS); reads=rr?JSON.parse(rr):{}; if(!reads||typeof reads!=='object') reads={}; }catch(e){ reads={}; }
+    try{ var ru=localStorage.getItem(KEY_UI); if(ru){ var u=JSON.parse(ru); if(u&&typeof u==='object') ['view','scope','status','pic','creator','prio','sort'].forEach(function(k){ if(u[k]) ui[k]=u[k]; }); } }catch(e){}
+  }
+  function saveTasks(){ try{ localStorage.setItem(KEY_TASKS, JSON.stringify(tasks)); }catch(e){ toast('Data tidak bisa disimpan di browser ini.'); } }
+  function saveUsers(){ try{ localStorage.setItem(KEY_USERS, JSON.stringify(users)); }catch(e){ toast('Akun tidak bisa disimpan di browser ini.'); } }
+  function saveUI(){ try{ localStorage.setItem(KEY_UI, JSON.stringify({view:ui.view,scope:ui.scope,status:ui.status,pic:ui.pic,creator:ui.creator,prio:ui.prio,sort:ui.sort})); }catch(e){} }
+  function saveReads(){ try{ localStorage.setItem(KEY_READS, JSON.stringify(reads)); }catch(e){} }
+
+  /* ---------- komentar ---------- */
+  function myReads(){ if(!reads[me.id]) reads[me.id]={}; return reads[me.id]; }
+  function unreadOf(t){
+    var list=t.comments||[]; if(!list.length) return 0;
+    var last=myReads()[t.id]||0;
+    return list.filter(function(c){ return c.userId!==me.id && c.at>last; }).length;
+  }
+  function markRead(t){
+    var list=t.comments||[];
+    var newest=list.reduce(function(m,c){ return Math.max(m,c.at); }, 0);
+    myReads()[t.id]=Math.max(newest, myReads()[t.id]||0, Date.now()-1);
+    saveReads();
+  }
+  function totalUnread(){ return tasks.reduce(function(n,t){ return n+unreadOf(t); },0); }
+  function fmtTime(ts){
+    var d=Math.floor((Date.now()-ts)/1000);
+    if(d<60) return 'baru saja';
+    if(d<3600) return Math.floor(d/60)+' menit lalu';
+    if(d<86400) return Math.floor(d/3600)+' jam lalu';
+    if(d<604800) return Math.floor(d/86400)+' hari lalu';
+    try{ return new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(ts)); }catch(e){ return ''; }
+  }
+
+  function openComments(id){
+    var t=find(id); if(!t) return;
+    commentTaskId=id;
+    renderComments();
+    markRead(t);
+    openModal('commentsModal');
+    $('cmInput').value='';
+    setTimeout(function(){ $('cmInput').focus(); var th=$('cmThread'); th.scrollTop=th.scrollHeight; },30);
+    render();
+  }
+  function renderComments(){
+    var t=find(commentTaskId); if(!t) return closeModal('commentsModal');
+    $('cmTitle').textContent=t.title;
+    $('cmMeta').textContent='PIC '+(t.picName||'belum ditentukan')+' · '+relDay(t.date)+' · '+(t.comments.length||0)+' komentar';
+    $('cmAvatar').innerHTML=avatar(me.name,'h-8 w-8 text-[11px]');
+    var last=myReads()[t.id]||0;
+    var html=t.comments.slice().sort(function(a,b){ return a.at-b.at; }).map(function(c){
+      var mine=c.userId===me.id;
+      var baru=!mine && c.at>last;
+      return ''+
+      '<div class="flex gap-2.5 py-2.5">'+avatar(c.userName,'h-8 w-8 text-[11px]')+
+        '<div class="min-w-0 flex-1">'+
+          '<div class="flex items-center gap-2">'+
+            '<span class="text-sm font-bold">'+esc(c.userName||'Pengguna')+(mine?' <span class="text-[11px] font-semibold" style="color:var(--muted)">(Anda)</span>':'')+'</span>'+
+            '<span class="text-[11px]" style="color:var(--faint)">'+esc(fmtTime(c.at))+'</span>'+
+            (baru?'<span class="rounded-md px-1.5 py-0.5 text-[10px] font-extrabold" style="background:var(--accent-soft); color:var(--accent-ink)">Baru</span>':'')+
+            ((mine||isAdmin())?'<button data-comment-del="'+c.id+'" class="focus-ring ml-auto rounded-lg px-1.5 py-0.5 text-[11px] font-bold" style="color:var(--muted)">Hapus</button>':'')+
+          '</div>'+
+          '<p class="mt-0.5 whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-[13px] leading-relaxed" style="background:var(--surface-2)">'+esc(c.text)+'</p>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    $('cmThread').innerHTML = html || '<p class="py-8 text-center text-sm" style="color:var(--faint)">Belum ada komentar. Mulai diskusi tentang tugas ini.</p>';
+  }
+  function postComment(){
+    var t=find(commentTaskId); if(!t) return;
+    var text=$('cmInput').value.trim();
+    if(!text) return;
+    t.comments.push({ id:uid('c'), userId:me.id, userName:me.name, text:text.slice(0,500), at:Date.now() });
+    saveTasks(); markRead(t);
+    $('cmInput').value='';
+    renderComments(); render();
+    setTimeout(function(){ var th=$('cmThread'); th.scrollTop=th.scrollHeight; },10);
+  }
+  function deleteComment(cid){
+    var t=find(commentTaskId); if(!t) return;
+    var i=t.comments.findIndex(function(c){ return c.id===cid; });
+    if(i===-1) return;
+    if(t.comments[i].userId!==me.id && !isAdmin()) return toast('Hanya penulis komentar atau administrator yang bisa menghapus.');
+    t.comments.splice(i,1); saveTasks(); renderComments(); render();
+  }
+
+  function renderBell(){
+    var n=totalUnread();
+    var badge=$('bellBadge');
+    badge.textContent=n>99?'99+':n;
+    badge.classList.toggle('hidden', n===0);
+    $('bellBtn').style.color = n ? 'var(--accent-ink)' : '';
+    var withUnread=tasks.filter(function(t){ return unreadOf(t)>0; }).sort(function(a,b){
+      var la=Math.max.apply(null,a.comments.map(function(c){return c.at;}));
+      var lb=Math.max.apply(null,b.comments.map(function(c){return c.at;}));
+      return lb-la;
+    }).slice(0,8);
+    $('bellMenu').innerHTML = withUnread.length ? (
+      '<p class="px-3 py-2 text-xs font-bold" style="color:var(--muted)">Komentar belum dibaca</p>'+
+      withUnread.map(function(t){
+        var u=unreadOf(t);
+        var lastC=t.comments.slice().sort(function(a,b){ return b.at-a.at; })[0];
+        return '<button data-bell="'+t.id+'" class="focus-ring flex w-full items-start gap-2.5 rounded-xl px-3 py-2 text-left hover:opacity-80">'+
+          avatar(lastC.userName,'h-7 w-7 text-[10px]')+
+          '<span class="min-w-0 flex-1">'+
+            '<span class="block truncate text-sm font-bold">'+esc(t.title)+'</span>'+
+            '<span class="block truncate text-xs" style="color:var(--muted)">'+esc(lastC.userName)+': '+esc(lastC.text)+'</span>'+
+          '</span>'+
+          '<span class="mt-0.5 min-w-[1.15rem] rounded-full px-1 text-center text-[10px] font-extrabold leading-[1.15rem] text-white" style="background-image:linear-gradient(135deg,var(--accent),var(--accent-2))">'+u+'</span>'+
+        '</button>';
+      }).join('')
+    ) : '<p class="px-3 py-6 text-center text-sm" style="color:var(--faint)">Tidak ada komentar baru.</p>';
+  }
+
+  /* ---------- auth ---------- */
+  function isSetup(){ return users.length === 0; }
+  function isAdmin(){ return me && me.role==='admin'; }
+  function userById(id){ for(var i=0;i<users.length;i++) if(users[i].id===id) return users[i]; return null; }
+  function activeUsers(){ return users.filter(function(u){ return u.active!==false; }); }
+
+  function paintAuth(){
+    var setup = isSetup();
+    $('authTitle').textContent = setup ? 'Buat akun administrator' : 'Masuk ke akun Anda';
+    $('authSub').textContent = setup
+      ? 'Akun pertama ini otomatis berperan sebagai administrator dan bisa menambahkan akun PIC setelahnya.'
+      : 'Gunakan nama pengguna dan kata sandi yang diberikan administrator.';
+    $('authBtn').textContent = setup ? 'Buat akun dan masuk' : 'Masuk';
+    $('wrapName').classList.toggle('hidden', !setup);
+    $('wrapPass2').classList.toggle('hidden', !setup);
+    $('aPass').setAttribute('autocomplete', setup ? 'new-password' : 'current-password');
+    $('authFoot').textContent = setup
+      ? 'Simpan kata sandi ini baik-baik. Data hanya tersimpan di browser perangkat ini.'
+      : 'Lupa kata sandi? Minta administrator melakukan reset dari menu Pengaturan akun.';
+    $('authErr').classList.add('hidden');
+  }
+  function authError(msg){ var e=$('authErr'); e.textContent=msg; e.classList.remove('hidden'); }
+
+  async function submitAuth(){
+    var username=$('aUser').value.trim().toLowerCase();
+    var pass=$('aPass').value;
+    if(isSetup()){
+      var name=$('aName').value.trim();
+      if(!name) return authError('Nama lengkap belum diisi.');
+      if(username.length<3) return authError('Nama pengguna minimal 3 karakter.');
+      if(pass.length<6) return authError('Kata sandi minimal 6 karakter.');
+      if(pass!==$('aPass2').value) return authError('Ulangan kata sandi belum sama.');
+      var salt=uid('s');
+      var u={ id:uid('u'), name:name, username:username, role:'admin', salt:salt, hash:await hashPass(pass,salt), active:true, created:Date.now() };
+      users.push(u); saveUsers(); startSession(u.id);
+      toast('Akun administrator dibuat. Selamat datang, '+u.name+'.');
+      return;
+    }
+    var found=null;
+    for(var i=0;i<users.length;i++){ if(users[i].username===username) found=users[i]; }
+    if(!found) return authError('Nama pengguna atau kata sandi salah.');
+    if(found.active===false) return authError('Akun ini dinonaktifkan. Hubungi administrator.');
+    var h=await hashPass(pass, found.salt);
+    if(h!==found.hash) return authError('Nama pengguna atau kata sandi salah.');
+    startSession(found.id);
+  }
+
+  function startSession(id){
+    try{ localStorage.setItem(KEY_SESSION, id); }catch(e){}
+    me=userById(id);
+    $('aPass').value=''; $('aPass2').value='';
+    showApp();
+  }
+  function logout(){
+    try{ localStorage.removeItem(KEY_SESSION); }catch(e){}
+    me=null;
+    $('appScreen').classList.add('hidden');
+    $('authScreen').classList.remove('hidden');
+    $('authScreen').classList.add('grid');
+    paintAuth();
+    $('aUser').value=''; $('aPass').value='';
+  }
+  function showApp(){
+    $('authScreen').classList.add('hidden');
+    $('authScreen').classList.remove('grid');
+    $('appScreen').classList.remove('hidden');
+    Array.prototype.forEach.call(document.querySelectorAll('.admin-only'), function(el){ el.style.display = isAdmin() ? '' : 'none'; });
+    if(ui.scope==='day') ui.date=todayISO();
+    render();
+  }
+
+  /* ---------- hak akses tugas ---------- */
+  function canEdit(t){ return isAdmin() || t.creatorId===me.id || t.picId===me.id; }
+  function canDelete(t){ return isAdmin() || t.creatorId===me.id; }
+
+  /* ---------- aksi tugas ---------- */
+  function find(id){ for(var i=0;i<tasks.length;i++) if(tasks[i].id===id) return tasks[i]; return null; }
+  function toggleDone(id){
+    var t=find(id); if(!t) return;
+    if(!canEdit(t)) return toast('Tugas ini milik PIC lain, hanya administrator yang bisa mengubahnya.');
+    t.done=!t.done; saveTasks(); render();
+  }
+  function removeTask(id){
+    var i=tasks.findIndex(function(t){ return t.id===id; }); if(i===-1) return;
+    if(!canDelete(tasks[i])) return toast('Hanya pembuat tugas atau administrator yang bisa menghapus.');
+    lastDeleted={task:tasks[i],index:i}; tasks.splice(i,1); saveTasks(); render();
+    toast('Tugas dihapus','Urungkan',function(){ if(lastDeleted){ tasks.splice(Math.min(lastDeleted.index,tasks.length),0,lastDeleted.task); lastDeleted=null; saveTasks(); render(); } });
+  }
+  function pushNextDay(id){
+    var t=find(id); if(!t||t.done) return;
+    if(!canEdit(t)) return toast('Tugas ini milik PIC lain, hanya administrator yang bisa menggesernya.');
+    t.date=addDays(t.date,1); t.moved=(t.moved||0)+1; saveTasks(); render();
+    toast('“'+t.title+'” digeser ke '+relDay(t.date).toLowerCase()+' ('+fmtShort(t.date)+')');
+  }
+  function pushAll(){
+    var target=tasks.filter(function(t){ return !t.done && inScope(t) && passFilters(t) && canEdit(t); });
+    if(!target.length) return toast('Tidak ada tugas belum selesai yang bisa Anda geser.');
+    target.forEach(function(t){ t.date=addDays(t.date,1); t.moved=(t.moved||0)+1; });
+    saveTasks(); render(); toast(target.length+' tugas digeser ke hari berikutnya');
+  }
+  function clearDone(){
+    var removable=tasks.filter(function(t){ return t.done && canDelete(t); });
+    if(!removable.length) return toast('Belum ada tugas selesai yang bisa Anda hapus.');
+    var backup=tasks.slice();
+    tasks=tasks.filter(function(t){ return !(t.done && canDelete(t)); });
+    saveTasks(); render();
+    toast(removable.length+' tugas selesai dihapus','Urungkan',function(){ tasks=backup; saveTasks(); render(); });
+  }
+
+  /* ---------- filter ---------- */
+  function inScope(t){
+    if(ui.scope==='day') return t.date===ui.date;
+    if(ui.scope==='mine') return t.picId===me.id || t.creatorId===me.id;
+    if(ui.scope==='overdue') return !t.done && t.date<todayISO();
+    if(ui.scope==='done') return t.done;
+    return true;
+  }
+  function passFilters(t){
+    if(ui.status==='belum'&&t.done) return false;
+    if(ui.status==='selesai'&&!t.done) return false;
+    if(ui.pic!=='semua' && (t.picId||'none')!==ui.pic) return false;
+    if(ui.creator!=='semua' && (t.creatorId||'none')!==ui.creator) return false;
+    if(ui.prio!=='semua' && t.prio!==ui.prio) return false;
+    if(ui.q){ var q=ui.q.toLowerCase(); if((t.title+' '+t.picName+' '+t.creatorName+' '+t.notes).toLowerCase().indexOf(q)===-1) return false; }
+    return true;
+  }
+  function sortList(list){
+    var s=ui.sort;
+    return list.slice().sort(function(a,b){
+      if(s==='prioritas'){ if(a.done!==b.done) return a.done?1:-1; if(PRIO[a.prio].rank!==PRIO[b.prio].rank) return PRIO[a.prio].rank-PRIO[b.prio].rank; return a.date<b.date?-1:a.date>b.date?1:0; }
+      if(s==='tanggal-asc') return a.date<b.date?-1:a.date>b.date?1:PRIO[a.prio].rank-PRIO[b.prio].rank;
+      if(s==='tanggal-desc') return a.date>b.date?-1:a.date<b.date?1:PRIO[a.prio].rank-PRIO[b.prio].rank;
+      if(s==='nama') return a.title.localeCompare(b.title,'id');
+      if(s==='pic') return (a.picName||'zzz').localeCompare(b.picName||'zzz','id');
+      if(s==='pembuat') return (a.creatorName||'zzz').localeCompare(b.creatorName||'zzz','id');
+      if(s==='status'){ if(a.done!==b.done) return a.done?1:-1; return PRIO[a.prio].rank-PRIO[b.prio].rank; }
+      return 0;
+    });
+  }
+  function visibleTasks(){ return sortList(tasks.filter(function(t){ return inScope(t)&&passFilters(t); })); }
+
+  /* ---------- modal tugas ---------- */
+  function fillPicSelect(selectedId){
+    var sel=$('fPic');
+    var list = isAdmin() ? activeUsers() : [me];
+    sel.innerHTML = list.map(function(u){
+      return '<option value="'+esc(u.id)+'">'+esc(u.name)+(u.role==='admin'?' · admin':'')+'</option>';
+    }).join('');
+    sel.value = selectedId && list.some(function(u){ return u.id===selectedId; }) ? selectedId : me.id;
+    sel.disabled = !isAdmin();
+    $('picHint').classList.toggle('hidden', isAdmin());
+  }
+  function openTaskModal(id){
+    editingId=id||null;
+    var t=id?find(id):null;
+    if(t && !canEdit(t)) return toast('Tugas ini hanya bisa diubah oleh PIC-nya atau administrator.');
+    $('taskModalTitle').textContent=t?'Ubah tugas':'Tambah tugas';
+    $('saveTask').textContent=t?'Simpan perubahan':'Simpan tugas';
+    $('fTitle').value=t?t.title:'';
+    $('fNotes').value=t?t.notes:'';
+    $('fPrio').value=t?t.prio:'sedang';
+    $('fDate').value=t?t.date:(ui.scope==='day'?ui.date:todayISO());
+    fillPicSelect(t?t.picId:me.id);
+    $('creatorNote').textContent = t
+      ? 'Dibuat oleh '+(t.creatorName||'tidak diketahui')+(t.moved?' · sudah digeser '+t.moved+'×':'')
+      : 'Tugas ini akan tercatat dibuat oleh '+me.name+'.';
+    $('titleErr').classList.add('hidden');
+    openModal('taskModal'); setTimeout(function(){ $('fTitle').focus(); },30);
+  }
+  function saveTaskForm(){
+    var title=$('fTitle').value.trim();
+    if(!title){ $('titleErr').classList.remove('hidden'); $('fTitle').focus(); return; }
+    var picUser=userById($('fPic').value)||me;
+    var data={ title:title, notes:$('fNotes').value.trim(), picId:picUser.id, picName:picUser.name, prio:$('fPrio').value, date:$('fDate').value||todayISO() };
+    if(editingId){
+      var t=find(editingId);
+      if(t){ t.title=data.title; t.notes=data.notes; t.picId=data.picId; t.picName=data.picName; t.prio=data.prio; t.date=data.date; }
+      toast('Perubahan tersimpan');
+    }else{
+      tasks.push({ id:uid('t'), title:data.title, notes:data.notes, picId:data.picId, picName:data.picName,
+        creatorId:me.id, creatorName:me.name, prio:data.prio, date:data.date, done:false, moved:0, created:Date.now(), comments:[] });
+      if(ui.scope==='day') ui.date=data.date;
+      toast('Tugas ditambahkan atas nama '+me.name);
+    }
+    saveTasks(); closeModal('taskModal'); render();
+  }
+
+  /* ---------- pengaturan akun ---------- */
+  function openUsers(){
+    if(!isAdmin()) return;
+    hideUserForm(); renderUsers(); openModal('usersModal');
+  }
+  function renderUsers(){
+    var rows=users.map(function(u){
+      var tasksOf=tasks.filter(function(t){ return t.picId===u.id; }).length;
+      var created=tasks.filter(function(t){ return t.creatorId===u.id; }).length;
+      return ''+
+      '<tr style="border-top:1px solid var(--border)">'+
+        '<td class="px-4 py-3"><span class="flex items-center gap-2.5">'+avatar(u.name,'h-8 w-8 text-[11px]')+
+          '<span class="leading-tight"><span class="block text-sm font-bold">'+esc(u.name)+(u.id===me.id?' <span class="text-[11px] font-semibold" style="color:var(--muted)">(Anda)</span>':'')+'</span>'+
+          '<span class="block text-xs" style="color:var(--muted)">@'+esc(u.username)+'</span></span></span></td>'+
+        '<td class="px-4 py-3"><span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:'+(u.role==='admin'?'var(--accent-soft)':'var(--surface-2)')+'; color:'+(u.role==='admin'?'var(--accent-ink)':'var(--muted)')+'">'+(u.role==='admin'?'Administrator':'PIC User')+'</span></td>'+
+        '<td class="whitespace-nowrap px-4 py-3 text-xs" style="color:var(--muted)">'+tasksOf+' tugas · '+created+' dibuat</td>'+
+        '<td class="px-4 py-3"><span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:'+(u.active!==false?'var(--lo-bg)':'var(--done-bg)')+'; color:'+(u.active!==false?'var(--lo-fg)':'var(--done-fg)')+'">'+(u.active!==false?'Aktif':'Nonaktif')+'</span></td>'+
+        '<td class="whitespace-nowrap px-4 py-3 text-right">'+
+          '<button data-user-action="edit" data-id="'+u.id+'" class="focus-ring rounded-lg px-2 py-1 text-xs font-bold" style="color:var(--accent-ink)">Ubah</button>'+
+          '<button data-user-action="delete" data-id="'+u.id+'" class="focus-ring rounded-lg px-2 py-1 text-xs font-bold" style="color:var(--hi-fg)">Hapus</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+    $('usersTable').innerHTML='<div class="scroll-x"><table class="w-full min-w-[620px] border-collapse text-left">'+
+      '<thead><tr style="background:var(--surface-2)">'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Akun</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Level</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Beban tugas</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Status</th>'+
+        '<th class="px-4 py-2.5 text-right text-xs font-semibold" style="color:var(--muted)">Aksi</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function showUserForm(mode,id){
+    userFormMode=mode; editingUserId=id||null;
+    var u=id?userById(id):null;
+    $('userFormTitle').textContent = mode==='self' ? 'Ubah kata sandi' : (u?'Ubah akun '+u.name:'Tambah akun');
+    $('uName').value=u?u.name:''; $('uUser').value=u?u.username:'';
+    $('uRole').value=u?u.role:'pic'; $('uActive').checked=u?u.active!==false:true; $('uPass').value='';
+    $('uUser').disabled=!!u;
+    $('passOptional').classList.toggle('hidden', !u);
+    $('wrapRole').style.display = mode==='self' ? 'none' : '';
+    $('wrapActive').style.display = (mode==='self'||(u&&u.id===me.id)) ? 'none' : 'flex';
+    $('uName').disabled = mode==='self' ? false : false;
+    $('userErr').classList.add('hidden');
+    $('userForm').classList.remove('hidden');
+    $('userForm').scrollIntoView({block:'nearest'});
+    setTimeout(function(){ (mode==='self'?$('uPass'):$('uName')).focus(); },30);
+  }
+  function hideUserForm(){ $('userForm').classList.add('hidden'); editingUserId=null; }
+  function userError(m){ var e=$('userErr'); e.textContent=m; e.classList.remove('hidden'); }
+
+  async function saveUserForm(){
+    var name=$('uName').value.trim();
+    var username=$('uUser').value.trim().toLowerCase();
+    var pass=$('uPass').value;
+    var editing=editingUserId?userById(editingUserId):null;
+
+    if(!name) return userError('Nama lengkap belum diisi.');
+    if(!editing){
+      if(username.length<3) return userError('Nama pengguna minimal 3 karakter.');
+      if(users.some(function(u){ return u.username===username; })) return userError('Nama pengguna sudah dipakai akun lain.');
+      if(pass.length<6) return userError('Kata sandi minimal 6 karakter.');
+      var salt=uid('s');
+      users.push({ id:uid('u'), name:name, username:username, role:$('uRole').value, salt:salt, hash:await hashPass(pass,salt), active:$('uActive').checked, created:Date.now() });
+      saveUsers(); hideUserForm(); renderUsers(); render(); toast('Akun '+name+' dibuat');
+      return;
+    }
+    if(pass && pass.length<6) return userError('Kata sandi minimal 6 karakter.');
+    var newRole = userFormMode==='self' ? editing.role : $('uRole').value;
+    var newActive = (userFormMode==='self'||editing.id===me.id) ? true : $('uActive').checked;
+    var admins=users.filter(function(u){ return u.role==='admin' && u.active!==false; });
+    if(editing.role==='admin' && (newRole!=='admin'||!newActive) && admins.length<=1) return userError('Minimal satu administrator aktif harus tetap ada.');
+
+    editing.name=name; editing.role=newRole; editing.active=newActive;
+    if(pass){ editing.salt=uid('s'); editing.hash=await hashPass(pass,editing.salt); }
+    // sinkronkan nama pada tugas
+    tasks.forEach(function(t){
+      if(t.picId===editing.id) t.picName=editing.name;
+      if(t.creatorId===editing.id) t.creatorName=editing.name;
+    });
+    saveUsers(); saveTasks();
+    if(editing.id===me.id) me=editing;
+    hideUserForm(); renderUsers(); render();
+    toast(pass?'Akun dan kata sandi diperbarui':'Akun diperbarui');
+  }
+  function deleteUser(id){
+    var u=userById(id); if(!u) return;
+    if(u.id===me.id) return toast('Anda tidak bisa menghapus akun yang sedang dipakai.');
+    var admins=users.filter(function(x){ return x.role==='admin' && x.active!==false; });
+    if(u.role==='admin' && admins.length<=1) return toast('Minimal satu administrator aktif harus tetap ada.');
+    var owned=tasks.filter(function(t){ return t.picId===u.id && !t.done; }).length;
+    var backupUsers=users.slice(), backupTasks=JSON.parse(JSON.stringify(tasks));
+    users=users.filter(function(x){ return x.id!==id; });
+    tasks.forEach(function(t){ if(t.picId===u.id){ t.picId=''; t.picName=u.name+' (nonaktif)'; } });
+    saveUsers(); saveTasks(); renderUsers(); render();
+    toast('Akun '+u.name+' dihapus'+(owned?', '+owned+' tugas aktifnya tanpa PIC':''),'Urungkan',function(){
+      users=backupUsers; tasks=backupTasks; saveUsers(); saveTasks(); renderUsers(); render();
+    });
+  }
+
+  /* ---------- modal helper ---------- */
+  function openModal(id){ var m=$(id); m.classList.remove('hidden'); m.classList.add('flex'); }
+  function closeModal(id){ var m=$(id); m.classList.add('hidden'); m.classList.remove('flex'); if(id==='taskModal') editingId=null; }
+
+  /* ---------- toast ---------- */
+  function toast(msg,actionLabel,onAction){
+    var box=$('toast'); box.innerHTML='';
+    var el=document.createElement('div');
+    el.className='pointer-events-auto flex max-w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium soft-lg card';
+    var s=document.createElement('span'); s.textContent=msg; el.appendChild(s);
+    if(actionLabel){
+      var b=document.createElement('button');
+      b.className='focus-ring rounded-lg px-2 py-1 text-sm font-extrabold';
+      b.style.color='var(--accent-ink)'; b.textContent=actionLabel;
+      b.addEventListener('click',function(){ box.innerHTML=''; if(onAction) onAction(); });
+      el.appendChild(b);
+    }
+    box.appendChild(el);
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){ box.innerHTML=''; }, actionLabel?6500:3200);
+  }
+
+  /* ---------- komponen ---------- */
+  var ICON={
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="h-3 w-3"><path d="m5 12 5 5 9-10"/></svg>',
+    next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M5 12h12M13 6l6 6-6 6"/></svg>',
+    edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="m14.5 5.5 4 4"/></svg>',
+    trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M20 12a7.5 7.5 0 0 1-7.5 7.5c-1.2 0-2.3-.25-3.3-.7L4.5 20l1.3-4.2A7.5 7.5 0 1 1 20 12Z"/></svg>'
+  };
+  function commentBtn(t){
+    var n=(t.comments||[]).length, u=unreadOf(t);
+    var badge = n ? '<span class="absolute -right-0.5 -top-0.5 min-w-[1rem] rounded-full px-1 text-center text-[10px] font-extrabold leading-4" style="'+
+      (u ? 'background-image:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff'
+         : 'background:var(--surface-2); color:var(--muted); border:1px solid var(--border)')+'">'+(u||n)+'</span>' : '';
+    return '<button data-action="comments" data-id="'+t.id+'" class="focus-ring relative rounded-lg p-1.5" style="color:'+(u?'var(--accent-ink)':'var(--muted)')+'" title="'+(u?u+' komentar belum dibaca':'Komentar')+'" aria-label="Komentar tugas">'+ICON.chat+badge+'</button>';
+  }
+  function avatar(name,size){
+    var s=size||'h-6 w-6 text-[10px]', h=hueOf(name||'Tanpa PIC');
+    return '<span class="grid '+s+' shrink-0 place-items-center rounded-full font-extrabold" style="background:hsl('+h+' 70% 90%); color:hsl('+h+' 55% 28%)">'+esc(initials(name))+'</span>';
+  }
+  function badge(t){ var p=PRIO[t.prio]; return '<span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:'+p.bg+'; color:'+p.fg+'">'+p.label+'</span>'; }
+  function dateChip(t){
+    var late=!t.done&&t.date<todayISO();
+    var txt=relDay(t.date)+(t.moved?' · digeser '+t.moved+'×':'');
+    return '<span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:'+(late?'var(--late-bg)':'var(--surface-2)')+'; color:'+(late?'var(--late-fg)':'var(--muted)')+'">'+esc(txt)+'</span>';
+  }
+  function checkBtn(t){
+    var style=t.done?'background-image:linear-gradient(135deg,var(--accent),var(--accent-2)); border-color:transparent; color:#fff'
+                    :'background:transparent; border-color:var(--border-strong); color:transparent';
+    return '<button data-action="toggle" data-id="'+t.id+'" class="focus-ring grid h-5 w-5 shrink-0 place-items-center rounded-full border-2" style="'+style+'" title="'+(t.done?'Tandai belum selesai':'Tandai selesai')+'" aria-label="'+(t.done?'Tandai belum selesai':'Tandai selesai')+'">'+ICON.check+'</button>';
+  }
+  function actionBtns(t){
+    var h=commentBtn(t);
+    if(!t.done && canEdit(t)) h+='<button data-action="push" data-id="'+t.id+'" class="focus-ring rounded-lg p-1.5" style="color:var(--muted)" title="Geser ke hari berikutnya" aria-label="Geser ke hari berikutnya">'+ICON.next+'</button>';
+    if(canEdit(t)) h+='<button data-action="edit" data-id="'+t.id+'" class="focus-ring rounded-lg p-1.5" style="color:var(--muted)" title="Ubah tugas" aria-label="Ubah tugas">'+ICON.edit+'</button>';
+    if(canDelete(t)) h+='<button data-action="delete" data-id="'+t.id+'" class="focus-ring rounded-lg p-1.5" style="color:var(--muted)" title="Hapus tugas" aria-label="Hapus tugas">'+ICON.trash+'</button>';
+    if(!canEdit(t)) h+='<span class="px-1 text-[11px]" style="color:var(--faint)">Hanya baca</span>';
+    return h;
+  }
+  function creatorLine(t){
+    if(!t.creatorName) return '';
+    var same=t.creatorId===t.picId;
+    return '<span class="truncate text-[11px]" style="color:var(--faint)">'+(same?'Dibuat sendiri':'Dibuat oleh '+esc(t.creatorName))+'</span>';
+  }
+
+  function cardHTML(t){
+    return ''+
+    '<article class="task-card rounded-2xl card p-4 soft">'+
+      '<div class="flex items-center justify-between gap-2">'+
+        '<div class="flex flex-wrap items-center gap-1.5">'+dateChip(t)+badge(t)+'</div>'+
+        (t.done?'<span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:var(--done-bg); color:var(--done-fg)">Selesai</span>':'')+
+      '</div>'+
+      '<div class="mt-3 flex items-start gap-2.5">'+checkBtn(t)+
+        '<div class="min-w-0">'+
+          '<p class="text-[15px] font-bold leading-snug '+(t.done?'line-through':'')+'" style="'+(t.done?'color:var(--faint)':'')+'">'+esc(t.title)+'</p>'+
+          (t.notes?'<p class="clamp-2 mt-1 text-[13px] leading-relaxed" style="color:var(--muted)">'+esc(t.notes)+'</p>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="mt-4 flex items-center justify-between gap-2 border-t pt-3" style="border-color:var(--border)">'+
+        '<div class="flex min-w-0 items-center gap-2">'+avatar(t.picName)+
+          '<span class="min-w-0 leading-tight">'+
+            '<span class="block truncate text-xs font-bold">'+esc(t.picName||'Tanpa PIC')+'</span>'+creatorLine(t)+
+          '</span>'+
+        '</div>'+
+        '<div class="flex items-center gap-0.5">'+actionBtns(t)+'</div>'+
+      '</div>'+
+    '</article>';
+  }
+
+  function renderBoard(list){
+    var board=$('board');
+    var cols=PRIO_ORDER.filter(function(p){ return ui.prio==='semua'||ui.prio===p; });
+    board.className='grid grid-cols-1 gap-4 '+(cols.length===3?'md:grid-cols-3':cols.length===2?'md:grid-cols-2':'md:grid-cols-1');
+    board.innerHTML=cols.map(function(p){
+      var items=list.filter(function(t){ return t.prio===p; }), meta=PRIO[p];
+      return ''+
+      '<div class="rounded-2xl p-3" style="background:var(--surface-2); border:1px solid var(--border)">'+
+        '<div class="flex items-center justify-between px-1 pb-3">'+
+          '<div class="flex items-center gap-2">'+
+            '<span class="h-2 w-2 rounded-full" style="background:'+meta.dot+'"></span>'+
+            '<span class="text-sm font-extrabold">Prioritas '+meta.label.toLowerCase()+'</span>'+
+            '<span class="rounded-md px-1.5 py-0.5 text-[11px] font-bold" style="background:var(--surface); color:var(--muted); border:1px solid var(--border)">'+items.length+'</span>'+
+          '</div>'+
+          '<button data-action="add-prio" data-prio="'+p+'" class="focus-ring rounded-lg p-1" style="color:var(--muted)" title="Tambah tugas prioritas '+meta.label.toLowerCase()+'" aria-label="Tambah tugas prioritas '+meta.label.toLowerCase()+'"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>'+
+        '</div>'+
+        '<div class="flex flex-col gap-3">'+
+          (items.length?items.map(cardHTML).join(''):'<p class="rounded-xl px-3 py-6 text-center text-xs" style="color:var(--faint); border:1px dashed var(--border-strong)">Kosong</p>')+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function renderList(list){
+    var rows=list.map(function(t){
+      var late=!t.done&&t.date<todayISO();
+      return ''+
+      '<tr style="border-top:1px solid var(--border)">'+
+        '<td class="px-4 py-3 align-middle">'+checkBtn(t)+'</td>'+
+        '<td class="px-2 py-3 align-middle">'+
+          '<p class="text-sm font-bold '+(t.done?'line-through':'')+'" style="'+(t.done?'color:var(--faint)':'')+'">'+esc(t.title)+'</p>'+
+          (t.notes?'<p class="clamp-2 mt-0.5 max-w-md text-xs" style="color:var(--muted)">'+esc(t.notes)+'</p>':'')+
+        '</td>'+
+        '<td class="whitespace-nowrap px-4 py-3 align-middle"><span class="flex items-center gap-2">'+avatar(t.picName)+'<span class="text-sm font-medium">'+esc(t.picName||'Tanpa PIC')+'</span></span></td>'+
+        '<td class="whitespace-nowrap px-4 py-3 align-middle text-sm" style="color:var(--muted)">'+esc(t.creatorName||'—')+'</td>'+
+        '<td class="whitespace-nowrap px-4 py-3 align-middle">'+badge(t)+'</td>'+
+        '<td class="whitespace-nowrap px-4 py-3 align-middle text-sm" style="color:'+(late?'var(--late-fg)':'var(--muted)')+'">'+esc(fmtShort(t.date))+(t.moved?' <span class="text-xs">· '+t.moved+'×</span>':'')+'</td>'+
+        '<td class="whitespace-nowrap px-4 py-3 align-middle"><span class="rounded-md px-2 py-0.5 text-[11px] font-bold" style="background:'+(t.done?'var(--done-bg)':late?'var(--late-bg)':'var(--accent-soft)')+'; color:'+(t.done?'var(--done-fg)':late?'var(--late-fg)':'var(--accent-ink)')+'">'+(t.done?'Selesai':late?'Terlambat':'Belum selesai')+'</span></td>'+
+        '<td class="whitespace-nowrap px-4 py-3 text-right align-middle"><span class="flex items-center justify-end gap-0.5">'+actionBtns(t)+'</span></td>'+
+      '</tr>';
+    }).join('');
+    $('listWrap').innerHTML='<div class="scroll-x"><table class="w-full min-w-[880px] border-collapse text-left">'+
+      '<thead><tr style="background:var(--surface-2)">'+
+        '<th class="px-4 py-2.5"></th>'+
+        '<th class="px-2 py-2.5 text-xs font-semibold" style="color:var(--muted)">Tugas</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">PIC</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Dibuat oleh</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Prioritas</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Tanggal</th>'+
+        '<th class="px-4 py-2.5 text-xs font-semibold" style="color:var(--muted)">Status</th>'+
+        '<th class="px-4 py-2.5 text-right text-xs font-semibold" style="color:var(--muted)">Aksi</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  function fillPeopleFilters(){
+    var picSel=$('picFilter'), crSel=$('creatorFilter');
+    var opts=users.map(function(u){ return '<option value="'+esc(u.id)+'">'+esc(u.name)+'</option>'; }).join('');
+    var anyNone=tasks.some(function(t){ return !t.picId; });
+    picSel.innerHTML='<option value="semua">Semua PIC</option>'+opts+(anyNone?'<option value="none">Tanpa PIC</option>':'');
+    crSel.innerHTML='<option value="semua">Semua pembuat</option>'+opts;
+    if(!picSel.querySelector('option[value="'+ui.pic+'"]')) ui.pic='semua';
+    if(!crSel.querySelector('option[value="'+ui.creator+'"]')) ui.creator='semua';
+    picSel.value=ui.pic; crSel.value=ui.creator;
+    crSel.style.display = isAdmin() ? '' : 'none';
+  }
+
+  function render(){
+    if(!me) return;
+    var list=visibleTasks();
+
+    var title,sub;
+    if(ui.scope==='day'){ title = ui.date===todayISO()?'Tugas hari ini':'Tugas '+relDay(ui.date).toLowerCase(); sub=fmtLong(ui.date); }
+    else if(ui.scope==='mine'){ title='Tugas saya'; sub='Tugas yang Anda pegang atau Anda buat'; }
+    else if(ui.scope==='all'){ title='Semua tugas'; sub=tasks.length+' tugas tersimpan'; }
+    else if(ui.scope==='overdue'){ title='Tugas terlambat'; sub='Belum selesai dan tanggalnya sudah lewat'; }
+    else { title='Tugas selesai'; sub='Riwayat pekerjaan yang sudah tuntas'; }
+    $('pageTitle').textContent=title;
+    $('pageSub').textContent=sub+' · '+list.length+' tugas tampil';
+
+    var t0=todayISO();
+    var counts={
+      day:tasks.filter(function(t){ return t.date===ui.date; }).length,
+      mine:tasks.filter(function(t){ return t.picId===me.id||t.creatorId===me.id; }).length,
+      all:tasks.length,
+      overdue:tasks.filter(function(t){ return !t.done&&t.date<t0; }).length,
+      done:tasks.filter(function(t){ return t.done; }).length
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('.scope-btn'),function(b){
+      var on=b.dataset.scope===ui.scope;
+      b.style.background=on?'var(--accent-soft)':'transparent';
+      b.style.color=on?'var(--accent-ink)':'var(--text)';
+      b.querySelector('.count').textContent=counts[b.dataset.scope];
+    });
+
+    var dayTasks=tasks.filter(function(t){ return t.date===ui.date; });
+    var dayDone=dayTasks.filter(function(t){ return t.done; }).length;
+    var pct=dayTasks.length?Math.round(dayDone/dayTasks.length*100):0;
+    $('dayPct').textContent=pct+'%';
+    $('dayBar').style.width=pct+'%';
+    $('dayCount').textContent=dayTasks.length?dayDone+' dari '+dayTasks.length+' tugas selesai':'Belum ada tugas di tanggal ini';
+
+    Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(c){
+      var on=c.dataset.status===ui.status;
+      c.style.background=on?'var(--surface)':'transparent';
+      c.style.color=on?'var(--text)':'var(--muted)';
+      c.style.boxShadow=on?'var(--shadow)':'none';
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.view-btn'),function(v){
+      var on=v.dataset.view===ui.view;
+      v.style.background=on?'var(--surface)':'transparent';
+      v.style.color=on?'var(--text)':'var(--muted)';
+      v.style.boxShadow=on?'var(--shadow)':'none';
+    });
+
+    $('dateNav').style.display=ui.scope==='day'?'':'none';
+    $('datePick').value=ui.date;
+    $('prioFilter').value=ui.prio;
+    $('sortBy').value=ui.sort;
+    fillPeopleFilters();
+
+    $('profileAvatar').innerHTML=avatar(me.name,'h-7 w-7 text-[11px]');
+    $('profileName').textContent=me.name;
+    $('profileRole').textContent=me.role==='admin'?'Administrator':'PIC User';
+    $('menuName').textContent=me.name;
+    $('menuUser').textContent='@'+me.username+' · '+(me.role==='admin'?'Administrator':'PIC User');
+    renderBell();
+
+    var board=$('board'), listWrap=$('listWrap'), empty=$('empty');
+    board.classList.add('hidden'); listWrap.classList.add('hidden'); empty.classList.add('hidden');
+    if(!list.length){
+      empty.classList.remove('hidden');
+      var hasAny=tasks.length>0;
+      $('emptyTitle').textContent=hasAny?'Tidak ada tugas yang cocok':'Belum ada tugas di sini';
+      $('emptyText').textContent=hasAny?'Ubah filter, ganti tanggal, atau tambahkan tugas baru untuk tampilan ini.':'Tambahkan tugas pertama lengkap dengan PIC dan prioritasnya.';
+      return;
+    }
+    if(ui.view==='tiles'){ board.classList.remove('hidden'); renderBoard(list); }
+    else { listWrap.classList.remove('hidden'); renderList(list); }
+  }
+
+  /* ---------- events ---------- */
+  $('authBtn').addEventListener('click', submitAuth);
+  ['aName','aUser','aPass','aPass2'].forEach(function(id){
+    $(id).addEventListener('keydown',function(e){ if(e.key==='Enter') submitAuth(); });
+  });
+
+  document.addEventListener('click',function(e){
+    var closeBtn=e.target.closest('[data-close]');
+    if(closeBtn){ closeModal(closeBtn.dataset.close); return; }
+
+    var btn=e.target.closest('[data-action]');
+    if(btn){
+      var a=btn.dataset.action, id=btn.dataset.id;
+      if(a==='toggle') return toggleDone(id);
+      if(a==='delete') return removeTask(id);
+      if(a==='push') return pushNextDay(id);
+      if(a==='edit') return openTaskModal(id);
+      if(a==='comments') return openComments(id);
+      if(a==='add-empty') return openTaskModal(null);
+      if(a==='add-prio'){ openTaskModal(null); $('fPrio').value=btn.dataset.prio; return; }
+    }
+    var del=e.target.closest('[data-comment-del]');
+    if(del) return deleteComment(del.dataset.commentDel);
+
+    var bell=e.target.closest('[data-bell]');
+    if(bell){ $('bellMenu').classList.add('hidden'); return openComments(bell.dataset.bell); }
+
+    var ua=e.target.closest('[data-user-action]');
+    if(ua){
+      if(ua.dataset.userAction==='edit') return showUserForm('admin',ua.dataset.id);
+      if(ua.dataset.userAction==='delete') return deleteUser(ua.dataset.id);
+    }
+    var menuBtn=e.target.closest('[data-menu]');
+    if(menuBtn){
+      $('profileMenu').classList.add('hidden');
+      var m=menuBtn.dataset.menu;
+      if(m==='logout') return logout();
+      if(m==='users') return openUsers();
+      if(m==='password'){ openModal('usersModal'); renderUsers(); showUserForm('self',me.id); return; }
+    }
+    var sb=e.target.closest('.scope-btn'); if(sb){ ui.scope=sb.dataset.scope; saveUI(); render(); return; }
+    var chip=e.target.closest('.chip'); if(chip){ ui.status=chip.dataset.status; saveUI(); render(); return; }
+    var vb=e.target.closest('.view-btn'); if(vb){ ui.view=vb.dataset.view; saveUI(); render(); return; }
+
+    if(!e.target.closest('#profileBtn') && !e.target.closest('#profileMenu')) $('profileMenu').classList.add('hidden');
+    if(!e.target.closest('#bellBtn') && !e.target.closest('#bellMenu')) $('bellMenu').classList.add('hidden');
+  });
+
+  $('profileBtn').addEventListener('click',function(){ $('bellMenu').classList.add('hidden'); $('profileMenu').classList.toggle('hidden'); });
+  $('bellBtn').addEventListener('click',function(){ $('profileMenu').classList.add('hidden'); renderBell(); $('bellMenu').classList.toggle('hidden'); });
+  $('cmSend').addEventListener('click', postComment);
+  $('cmInput').addEventListener('keydown',function(e){ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) postComment(); });
+  $('commentsModal').addEventListener('click',function(e){ if(e.target===this) closeModal('commentsModal'); });
+  $('addBtn').addEventListener('click',function(){ openTaskModal(null); });
+  $('saveTask').addEventListener('click', saveTaskForm);
+  $('fTitle').addEventListener('keydown',function(e){ if(e.key==='Enter') saveTaskForm(); });
+  $('taskModal').addEventListener('click',function(e){ if(e.target===this) closeModal('taskModal'); });
+  $('usersModal').addEventListener('click',function(e){ if(e.target===this) closeModal('usersModal'); });
+
+  $('usersBtnSide').addEventListener('click', openUsers);
+  $('newUserBtn').addEventListener('click',function(){ showUserForm('admin',null); });
+  $('cancelUser').addEventListener('click', hideUserForm);
+  $('saveUser').addEventListener('click', saveUserForm);
+
+  $('prevDay').addEventListener('click',function(){ ui.date=addDays(ui.date,-1); render(); });
+  $('nextDay').addEventListener('click',function(){ ui.date=addDays(ui.date,1); render(); });
+  $('todayBtn').addEventListener('click',function(){ ui.date=todayISO(); render(); });
+  $('datePick').addEventListener('change',function(e){ if(e.target.value){ ui.date=e.target.value; render(); } });
+
+  $('picFilter').addEventListener('change',function(e){ ui.pic=e.target.value; saveUI(); render(); });
+  $('creatorFilter').addEventListener('change',function(e){ ui.creator=e.target.value; saveUI(); render(); });
+  $('prioFilter').addEventListener('change',function(e){ ui.prio=e.target.value; saveUI(); render(); });
+  $('sortBy').addEventListener('change',function(e){ ui.sort=e.target.value; saveUI(); render(); });
+  $('pushAllBtn').addEventListener('click', pushAll);
+  $('clearDoneBtn').addEventListener('click', clearDone);
+
+  function onSearch(e){
+    ui.q=e.target.value.trim();
+    var other=e.target.id==='search'?'searchMobile':'search';
+    $(other).value=e.target.value; render();
+  }
+  $('search').addEventListener('input',onSearch);
+  $('searchMobile').addEventListener('input',onSearch);
+
+  function themeState(){ try{ return localStorage.getItem('tasklist.theme')||'auto'; }catch(e){ return 'auto'; } }
+  function paintTheme(){
+    var s=themeState();
+    $('themeLabel').textContent = s==='dark'?'Gelap':s==='light'?'Terang':'Otomatis';
+    if(s==='auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme',s);
+  }
+  $('themeBtn').addEventListener('click',function(){
+    var order=['auto','light','dark'], next=order[(order.indexOf(themeState())+1)%3];
+    try{ localStorage.setItem('tasklist.theme',next); }catch(e){}
+    paintTheme(); if(me) render();
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      if(!$('commentsModal').classList.contains('hidden')) closeModal('commentsModal');
+      else if(!$('taskModal').classList.contains('hidden')) closeModal('taskModal');
+      else if(!$('usersModal').classList.contains('hidden')) closeModal('usersModal');
+      $('profileMenu').classList.add('hidden');
+      $('bellMenu').classList.add('hidden');
+    }
+    if(e.key==='/' && me && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){
+      e.preventDefault();
+      (window.innerWidth>=640?$('search'):$('searchMobile')).focus();
+    }
+  });
+
+  /* ---------- mulai ---------- */
+  loadAll();
+  paintTheme();
+  var sid=null; try{ sid=localStorage.getItem(KEY_SESSION); }catch(e){}
+  var sessionUser=sid?userById(sid):null;
+  if(sessionUser && sessionUser.active!==false){ me=sessionUser; showApp(); }
+  else { paintAuth(); }
+})();
+</script>
+</body>
+</html>
